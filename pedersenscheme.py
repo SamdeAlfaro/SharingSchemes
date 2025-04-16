@@ -1,21 +1,18 @@
-import random
-from Crypto.Util.number import getPrime, inverse, GCD
 from typing import List, Tuple
+from Crypto.Util.number import getPrime, inverse
+from Crypto.Random import random
+from sympy import isprime
 
 def generate_safe_primes(bits=256):
     while True:
         q = getPrime(bits)
         p = 2 * q + 1
-        if is_prime(p):
+        if isprime(p):
             return p, q
-
-def is_prime(n):
-    from sympy import isprime
-    return isprime(n)
 
 def find_generator(p, q):
     for g in range(2, p):
-        if pow(g, q, p) == 1:
+        if pow(g, q, p) == 1 and pow(g, 2, p) != 1:
             return g
     raise ValueError("No generator found")
 
@@ -23,25 +20,35 @@ class PedersenSecretSharing:
     def __init__(self, threshold: int, num_shares: int, bits: int = 256):
         self.t = threshold
         self.n = num_shares
+        self.bits = bits
+
+        # Generate safe primes and generators
         self.p, self.q = generate_safe_primes(bits)
         self.g = find_generator(self.p, self.q)
         self.h = find_generator(self.p, self.q)
         if self.g == self.h:
             self.h = pow(self.g, 2, self.p)
 
-    def split(self, secret: int):
-        a = [secret] + [random.randrange(self.q) for _ in range(1, self.t)]
-        b = [random.randrange(self.q) for _ in range(self.t)]
+    def eval_poly(self, poly: List[int], x: int) -> int:
+        return sum((coeff * pow(x, i, self.q)) % self.q for i, coeff in enumerate(poly)) % self.q
 
-        # Generate shares
+    def split(self, secret: int) -> Tuple[List[Tuple[int, int, int]], List[int]]:
+        # Generate the secret and blinding polynomials over Z_q
+        a_coeffs = [secret] + [random.randrange(self.q) for _ in range(1, self.t)]
+        b_coeffs = [random.randrange(self.q) for _ in range(self.t)]
+
+        # Evaluate the shares
         shares = []
-        for i in range(1, self.n + 1):
-            x = i
-            s = sum((a[j] * pow(x, j, self.q)) % self.q for j in range(self.t)) % self.q
-            r = sum((b[j] * pow(x, j, self.q)) % self.q for j in range(self.t)) % self.q
+        for x in range(1, self.n + 1):
+            s = self.eval_poly(a_coeffs, x)
+            r = self.eval_poly(b_coeffs, x)
             shares.append((x, s, r))
 
-        commitments = [pow(self.g, a_j, self.p) * pow(self.h, b_j, self.p) % self.p for a_j, b_j in zip(a, b)]
+        # Commitments: C_j = g^a_j * h^b_j mod p
+        commitments = [
+            (pow(self.g, a, self.p) * pow(self.h, b, self.p)) % self.p
+            for a, b in zip(a_coeffs, b_coeffs)
+        ]
 
         return shares, commitments
 
@@ -53,7 +60,7 @@ class PedersenSecretSharing:
         return lhs == rhs
 
     def reconstruct(self, shares: List[Tuple[int, int]]) -> int:
-        """Lagrange interpolation in Z_q to recover secret."""
+        # Lagrange interpolation in Z_q to recover secret.
         secret = 0
         for i, (xi, si) in enumerate(shares):
             li = 1
