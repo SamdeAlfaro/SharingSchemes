@@ -10,7 +10,7 @@ class BlakleySecretSharing:
         self.p = getPrime(bit_length)  # finite field modulus
 
     def split(self, secret: int) -> List[Tuple[List[int], int]]:
-        """Split the secret using hyperplanes (one per share)."""
+        # Split the secret using hyperplanes (one per share).
         if secret >= self.p:
             raise ValueError("Secret must be less than the prime field")
 
@@ -27,7 +27,7 @@ class BlakleySecretSharing:
         return shares
 
     def reconstruct(self, shares: List[Tuple[List[int], int]]) -> int:
-        """Reconstruct the secret from k shares (solve system of linear equations)."""
+        # Reconstruct the secret from k shares (solve system of linear equations).
         if len(shares) < self.k:
             raise ValueError(f"Need at least {self.k} shares to reconstruct the secret")
 
@@ -41,7 +41,7 @@ class BlakleySecretSharing:
         return x[0]  # The secret is the first coordinate
 
     def _solve_linear_system_mod_p(self, A: List[List[int]], b: List[int], p: int) -> List[int]:
-        """Solves Ax = b mod p using Gaussian elimination"""
+        # Solves Ax = b mod p using Gaussian elimination
         n = len(A)
         A = [row[:] for row in A]
         b = b[:]
