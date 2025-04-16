@@ -1,9 +1,7 @@
 from sympy import nextprime
-import random
+import secrets  # Use the cryptographically secure secrets module
 from functools import reduce
 from math import prod
-
-# Derived from; https://github.com/AlamHasabie/simple-asmuth-bloom/blob/master/asmuth_bloom.py
 
 def chinese_remainder(moduli, residues):
     """Solve the system of congruences using the Chinese Remainder Theorem."""
@@ -66,7 +64,7 @@ class AsmuthBloom:
 
     def _generate_random(self):
         max_r = (self.M - self.secret) // self.sequence[0]
-        self.random_r = random.randint(1, max_r)
+        self.random_r = secrets.randbelow(max_r) + 1  # Use secrets.randbelow() for cryptographic security
         self.y = self.secret + self.random_r * self.sequence[0]
         if self.verbose:
             print(f"Random r: {self.random_r}")
@@ -79,7 +77,15 @@ class AsmuthBloom:
         return self.sequence
 
     def solve(self):
-        chosen = random.sample(self.holders, self.min_holder)
+        # Securely generate random indices for shuffling
+        random_indices = [secrets.randbelow(2**32) for _ in range(len(self.holders))]
+        
+        # Pair each holder with a random index, then sort by the random index
+        indexed_holders = list(zip(self.holders, random_indices))
+        indexed_holders.sort(key=lambda x: x[1])  # Sort by the random index
+
+        # Select the first min_holder holders
+        chosen = [h[0] for h in indexed_holders[:self.min_holder]]
         moduli = [h.modulo for h in chosen]
         remainders = [h.secret for h in chosen]
         solution = chinese_remainder(moduli, remainders)
