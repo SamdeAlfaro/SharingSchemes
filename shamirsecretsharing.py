@@ -1,6 +1,17 @@
 from Crypto.Util.number import getPrime, getRandomRange, inverse
 from typing import List, Tuple
 import hashlib
+from sympy import isprime
+
+def generate_safe_primes(bits=256):
+    while True:
+        q = getPrime(bits)
+        p = 2 * q + 1
+        if isprime(p):
+            return p, q
+
+# For Shamir, you can adopt a similar pattern to generate a safe prime for consistency
+
 
 class ShamirSecretSharing:
     def __init__(self, threshold: int, num_shares: int, bit_length: int = 256):
@@ -10,7 +21,7 @@ class ShamirSecretSharing:
         self.k = threshold
         self.n = num_shares
         self.bit_length = bit_length
-        self.prime = getPrime(bit_length)
+        self.prime, _ = generate_safe_primes(bits=256)
 
     def _hash_secret(self, secret_bytes: bytes) -> int:
         # Hash secret into the field.
@@ -48,33 +59,17 @@ class ShamirSecretSharing:
 
         return shares
 
-    def _lagrange_interpolate(self, x: int, x_s: List[int], y_s: List[int]) -> int:
-        # Perform Lagrange interpolation at point x.
-        total = 0
-        k = len(x_s)
-        for i in range(k):
-            xi, yi = x_s[i], y_s[i]
-            prod = 1
-            for j in range(k):
-                if i != j:
-                    xj = x_s[j]
-                    denom = (xi - xj) % self.prime
-                    numer = (x - xj) % self.prime
-                    prod = (prod * numer * inverse(denom, self.prime)) % self.prime
-            total = (total + yi * prod) % self.prime
-        return total
-
     def reconstruct(self, shares: List[Tuple[int, int]]) -> int:
-        # Reconstruct the secret from k shares.
-        if len(shares) < self.k:
-            raise ValueError(f"Need at least {self.k} shares to reconstruct the secret")
-
-        x_s, y_s = zip(*shares[:self.k])
-        if len(set(x_s)) < self.k:
-            raise ValueError("Duplicate x-values in shares")
-        
-        return self._lagrange_interpolate(0, list(x_s), list(y_s))
-
+        secret = 0
+        for i, (xi, yi) in enumerate(shares):
+            li = 1
+            for j, (xj, _) in enumerate(shares):
+                if i != j:
+                    li *= (xj * inverse(xj - xi, self.prime)) % self.prime
+                    li %= self.prime
+            secret += yi * li
+            secret %= self.prime
+        return secret
 
 if __name__ == "__main__":
     secret = 98765432109876543210
