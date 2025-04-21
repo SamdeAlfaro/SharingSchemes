@@ -1,6 +1,5 @@
 from sympy import nextprime
 import secrets  # Use the cryptographically secure secrets module
-from functools import reduce
 from math import prod
 
 def chinese_remainder(moduli, residues):
@@ -41,12 +40,16 @@ class AsmuthBloom:
     def _generate_sequence(self):
         s = self.secret
         first_prime = nextprime(s)
+        if type(first_prime) != int:
+            raise ValueError("first_prime: {first_prime} not an int")
         multiplier = 10
         while True:
             sequence = [first_prime]
             p = nextprime(s * multiplier)
             for _ in range(self.n_holder):
                 p = nextprime(p)
+                if type(p) != int:
+                    raise ValueError(f"p: {p} not an int")
                 sequence.append(p)
             if self._is_sequence_valid(sequence):
                 self.sequence = sequence
@@ -62,6 +65,8 @@ class AsmuthBloom:
         upper = seq[0] * prod(seq[-(self.min_holder - 1):])
         return lower > upper
 
+    # Different random number generators can
+    # affect perf so maybe we want to share them
     def _generate_random(self):
         max_r = (self.M - self.secret) // self.sequence[0]
         self.random_r = secrets.randbelow(max_r) + 1  # Use secrets.randbelow() for cryptographic security
@@ -79,7 +84,7 @@ class AsmuthBloom:
     def solve(self):
         # Securely generate random indices for shuffling
         random_indices = [secrets.randbelow(2**32) for _ in range(len(self.holders))]
-        
+
         # Pair each holder with a random index, then sort by the random index
         indexed_holders = list(zip(self.holders, random_indices))
         indexed_holders.sort(key=lambda x: x[1])  # Sort by the random index
@@ -97,7 +102,7 @@ class AsmuthBloom:
             print(f"Recovered y: {solution}, Secret: {recovered}")
         return recovered
 
-# Example test
-ab = AsmuthBloom(n_holders=5, min_holder=3, secret=123456789, verbose=True)
-recovered = ab.solve()
-recovered
+if __name__ == "__main__":
+    # Example test
+    ab = AsmuthBloom(n_holders=5, min_holder=3, secret=123456789, verbose=True)
+    recovered = ab.solve()
