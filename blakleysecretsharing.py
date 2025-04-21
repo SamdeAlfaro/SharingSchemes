@@ -79,6 +79,7 @@ class BlakleySecretSharing:
 
 if __name__ == "__main__":
     secret = 123456789
+    print("Secret:", secret)
     bss = BlakleySecretSharing(threshold=3, num_shares=5)
 
     print("Prime field:", bss.p)

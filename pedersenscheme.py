@@ -23,6 +23,8 @@ class PedersenSecretSharing:
         self.bits = bits
 
         # Generate safe primes and generators
+        # Not sure if we need a safe prime actually, it's much slower
+        # to compute. Same thing would apply to the Shamir scheme.
         self.p, self.q = generate_safe_primes(bits)
         self.g = find_generator(self.p, self.q)
         self.h = find_generator(self.p, self.q)
@@ -45,6 +47,8 @@ class PedersenSecretSharing:
             shares.append((x, s, r))
 
         # Commitments: C_j = g^a_j * h^b_j mod p
+        # Maybe we break this out and share split with Shamir and Feldman.
+        # A lot of these functions can be shared between them if we want.
         commitments = [
             (pow(self.g, a, self.p) * pow(self.h, b, self.p)) % self.p
             for a, b in zip(a_coeffs, b_coeffs)
@@ -74,6 +78,7 @@ class PedersenSecretSharing:
 
 if __name__ == "__main__":
     secret = 123456789
+    print("Secret:", secret)
     pss = PedersenSecretSharing(threshold=3, num_shares=5)
 
     print("p:", pss.p)
@@ -87,5 +92,5 @@ if __name__ == "__main__":
     for x, s, r in shares:
         print(f"{x}: s = {s}, r = {r}, valid? {pss.verify_share(x, s, r, commitments)}")
 
-    recovered = pss.reconstruct([(x, s) for x, s, r in shares[:3]])
+    recovered = pss.reconstruct([(x, s) for x, s, _ in shares[:3]])
     print("\nRecovered Secret:", recovered)

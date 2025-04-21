@@ -17,7 +17,7 @@ class ShamirSecretSharing:
     def __init__(self, threshold: int, num_shares: int, bit_length: int = 256):
         if threshold > num_shares:
             raise ValueError("Threshold cannot be greater than number of shares")
-        
+
         self.k = threshold
         self.n = num_shares
         self.bit_length = bit_length
@@ -38,24 +38,26 @@ class ShamirSecretSharing:
             result = (result * x + coeff) % self.prime
         return result
 
-    def split(self, secret: int, hash_secret: bool = False) -> List[Tuple[int, int]]:
+    def split(self, secret: int, is_hash_secret: bool = False) -> List[Tuple[int, int]]:
         # Split secret into shares.
-        if hash_secret:
+        # Not sure why we would want to do this
+        if is_hash_secret:
             secret = self._hash_secret(str(secret).encode())
 
         if secret >= self.prime:
             raise ValueError("Secret must be less than the prime field")
-        
+
         poly = self._random_polynomial(secret)
         x_values = set()
         shares = []
 
-        while len(x_values) < self.n:
-            x = getRandomRange(1, self.prime)
-            if x not in x_values:
-                y = self._evaluate_polynomial(poly, x)
-                shares.append((x, y))
-                x_values.add(x)
+        x = 1
+        while x <= self.n:
+            y = self._evaluate_polynomial(poly, x)
+            shares.append((x, y))
+            x_values.add(x)
+            # Simple x values are fine
+            x = x + 1
 
         return shares
 
@@ -72,11 +74,10 @@ class ShamirSecretSharing:
         return secret
 
 if __name__ == "__main__":
-    secret = 98765432109876543210
+    secret = 123456798
+    print("Secret:", secret)
     sss = ShamirSecretSharing(threshold=3, num_shares=5, bit_length=256)
-
     print("Prime field:", sss.prime)
-
     shares = sss.split(secret)
     print("Generated Shares:")
     for share in shares:
@@ -84,3 +85,4 @@ if __name__ == "__main__":
 
     recovered = sss.reconstruct(shares[:3])
     print("Recovered Secret:", recovered)
+    print("Secrets match:", secret == recovered)
