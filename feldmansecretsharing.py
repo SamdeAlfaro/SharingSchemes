@@ -3,18 +3,25 @@ from Crypto.Util.number import getPrime, inverse
 from Crypto.Random import random
 from sympy import isprime
 
-def generate_safe_primes(bits=256):
+def generate_group(bits=256):
+    from sympy import isprime  # Ensure you're using sympy's isprime
+
     while True:
         q = getPrime(bits)
-        p = 2 * q + 1
-        if isprime(p):
-            return p, q
+        for _ in range(1000):  # Try up to 1000 k values for this q
+            k = random.randint(2, 1 << 12)  # Larger range for k
+            p = k * q + 1
+            if isprime(p):
+                # Now find g, h in subgroup of order q
+                def find_subgroup_generator(p, q, k):
+                    while True:
+                        g = random.randrange(2, p - 1)
+                        # Ensure g not in subgroup of small order
+                        if pow(g, (p - 1) // q, p) != 1:
+                            return pow(g, k, p)  # g^k mod p has order q
 
-def find_generator(p, q):
-    for g in range(2, p):
-        if pow(g, q, p) == 1 and pow(g, 2, p) != 1:
-            return g
-    raise ValueError("No generator found")
+                g = find_subgroup_generator(p, q, k)
+                return p, q, g
 
 class FeldmanVerifiableSecretSharing:
     def __init__(self, threshold: int, num_shares: int, bits: int = 256):
@@ -22,9 +29,7 @@ class FeldmanVerifiableSecretSharing:
         self.n = num_shares
         self.bits = bits
 
-        # Safe prime setup: p = 2q + 1
-        self.p, self.q = generate_safe_primes(bits)
-        self.g = find_generator(self.p, self.q)
+        self.p, self.q, self.g = generate_group(bits)
 
     def _eval_poly(self, coeffs: List[int], x: int) -> int:
         return sum((coeff * pow(x, i, self.q)) % self.q for i, coeff in enumerate(coeffs)) % self.q

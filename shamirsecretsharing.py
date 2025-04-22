@@ -2,14 +2,6 @@ from Crypto.Util.number import getPrime, getRandomRange, inverse
 from typing import List, Tuple
 import hashlib
 from sympy import isprime
-
-def generate_safe_primes(bits=256):
-    while True:
-        q = getPrime(bits)
-        p = 2 * q + 1
-        if isprime(p):
-            return p, q
-
 # For Shamir, you can adopt a similar pattern to generate a safe prime for consistency
 
 
@@ -21,12 +13,7 @@ class ShamirSecretSharing:
         self.k = threshold
         self.n = num_shares
         self.bit_length = bit_length
-        self.prime, _ = generate_safe_primes(bits=256)
-
-    def _hash_secret(self, secret_bytes: bytes) -> int:
-        # Hash secret into the field.
-        digest = hashlib.sha256(secret_bytes).digest()
-        return int.from_bytes(digest, 'big') % self.prime
+        self.prime = getPrime(bit_length)
 
     def _random_polynomial(self, secret: int) -> List[int]:
         return [secret] + [getRandomRange(1, self.prime) for _ in range(self.k - 1)]
@@ -38,11 +25,8 @@ class ShamirSecretSharing:
             result = (result * x + coeff) % self.prime
         return result
 
-    def split(self, secret: int, is_hash_secret: bool = False) -> List[Tuple[int, int]]:
+    def split(self, secret: int) -> List[Tuple[int, int]]:
         # Split secret into shares.
-        # Not sure why we would want to do this
-        if is_hash_secret:
-            secret = self._hash_secret(str(secret).encode())
 
         if secret >= self.prime:
             raise ValueError("Secret must be less than the prime field")
@@ -79,6 +63,7 @@ if __name__ == "__main__":
     sss = ShamirSecretSharing(threshold=3, num_shares=5, bit_length=256)
     print("Prime field:", sss.prime)
     shares = sss.split(secret)
+    print("Shamir prime bit length:", sss.prime.bit_length())
     print("Generated Shares:")
     for share in shares:
         print(share)
