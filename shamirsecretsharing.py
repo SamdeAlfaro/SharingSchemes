@@ -1,12 +1,17 @@
+import datetime
 from Crypto.Util.number import getPrime, getRandomRange, inverse
 from typing import List, Tuple
-import hashlib
-from sympy import isprime
-# For Shamir, you can adopt a similar pattern to generate a safe prime for consistency
-
+from helpers import eval_poly
 
 class ShamirSecretSharing:
-    def __init__(self, threshold: int, num_shares: int, bit_length: int = 256):
+    def __init__(
+        self,
+        threshold: int,
+        num_shares: int,
+        bit_length: int = 256,
+        # Internal logs for the class
+        enable_logs: bool = False
+        ):
         if threshold > num_shares:
             raise ValueError("Threshold cannot be greater than number of shares")
 
@@ -14,18 +19,13 @@ class ShamirSecretSharing:
         self.n = num_shares
         self.bit_length = bit_length
         self.prime = getPrime(bit_length)
+        self.enable_logs = enable_logs
 
     def _random_polynomial(self, secret: int) -> List[int]:
         return [secret] + [getRandomRange(1, self.prime) for _ in range(self.k - 1)]
 
-    def _evaluate_polynomial(self, coeffs: List[int], x: int) -> int:
-        #  Evaluate polynomial at point x (mod prime)
-        result = 0
-        for coeff in reversed(coeffs):
-            result = (result * x + coeff) % self.prime
-        return result
-
     def split(self, secret: int) -> List[Tuple[int, int]]:
+        start_time = datetime.datetime.now()
         # Split secret into shares.
 
         if secret >= self.prime:
@@ -37,15 +37,19 @@ class ShamirSecretSharing:
 
         x = 1
         while x <= self.n:
-            y = self._evaluate_polynomial(poly, x)
+            y = eval_poly(poly, self.prime, x)
             shares.append((x, y))
             x_values.add(x)
             # Simple x values are fine
             x = x + 1
+        if self.enable_logs:
+            elapsed = datetime.datetime.now() - start_time
+            print("split(shares):", elapsed.total_seconds() * 1000)
 
         return shares
 
     def reconstruct(self, shares: List[Tuple[int, int]]) -> int:
+        start_time = datetime.datetime.now()
         secret = 0
         for i, (xi, yi) in enumerate(shares):
             li = 1
@@ -55,13 +59,18 @@ class ShamirSecretSharing:
                     li %= self.prime
             secret += yi * li
             secret %= self.prime
+        if self.enable_logs:
+            elapsed = datetime.datetime.now() - start_time
+            print("reconstruct():", elapsed.total_seconds() * 1000)
         return secret
 
 if __name__ == "__main__":
     secret = 123456798
     print("Secret:", secret)
-    sss = ShamirSecretSharing(threshold=3, num_shares=5, bit_length=256)
+    sss = ShamirSecretSharing(threshold=3, num_shares=5)
+
     print("Prime field:", sss.prime)
+
     shares = sss.split(secret)
     print("Shamir prime bit length:", sss.prime.bit_length())
     print("Generated Shares:")

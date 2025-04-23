@@ -1,7 +1,6 @@
 from typing import List, Tuple
 from Crypto.Util.number import getPrime, inverse
 from Crypto.Random import random
-from sympy import isprime
 
 def generate_group(bits=256):
     from sympy import isprime  # Ensure you're using sympy's isprime
