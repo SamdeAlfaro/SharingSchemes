@@ -1,9 +1,9 @@
 import datetime
 from typing import List, Tuple
-from Crypto.Util.number import getPrime, inverse
+from Crypto.Util.number import getPrime
+from helpers import eval_poly, lagrange_eval
 from Crypto.Random import random
 from sympy import isprime
-from helpers import eval_poly
 
 def generate_group(bits=256):
     while True:
@@ -82,15 +82,7 @@ class PedersenSecretSharing:
 
     def reconstruct(self, shares: List[Tuple[int, int]]) -> int:
         start_time = datetime.datetime.now()
-        secret = 0
-        for i, (xi, si) in enumerate(shares):
-            li = 1
-            for j, (xj, _) in enumerate(shares):
-                if i != j:
-                    li *= (xj * inverse(xj - xi, self.q)) % self.q
-                    li %= self.q
-            secret += si * li
-            secret %= self.q
+        secret = lagrange_eval(shares, self.q)
         elapsed = datetime.datetime.now() - start_time
         if self.enable_logs:
             print("reconstruct(): ", elapsed.total_seconds() * 1000)
