@@ -1,11 +1,10 @@
 from typing import List, Tuple
-from Crypto.Util.number import getPrime, inverse
+from Crypto.Util.number import getPrime
+from helpers import eval_poly, lagrange_eval
 from Crypto.Random import random
 from sympy import isprime
 
 def generate_group(bits=256):
-    from sympy import isprime  # Ensure you're using sympy's isprime
-
     while True:
         q = getPrime(bits)
         for _ in range(1000):  # Try up to 1000 k values for this q
@@ -31,9 +30,6 @@ class FeldmanVerifiableSecretSharing:
 
         self.p, self.q, self.g = generate_group(bits)
 
-    def _eval_poly(self, coeffs: List[int], x: int) -> int:
-        return sum((coeff * pow(x, i, self.q)) % self.q for i, coeff in enumerate(coeffs)) % self.q
-
     def split(self, secret: int) -> Tuple[List[Tuple[int, int]], List[int]]:
         # Coefficients for the secret-sharing polynomial
         coeffs = [secret] + [random.randrange(self.q) for _ in range(1, self.t)]
@@ -41,7 +37,7 @@ class FeldmanVerifiableSecretSharing:
         # Shares (no r)
         shares = []
         for x in range(1, self.n + 1):
-            y = self._eval_poly(coeffs, x)
+            y = eval_poly(coeffs, self.q, x)
             shares.append((x, y))
 
         # Commitments: C_j = g^a_j mod p
@@ -58,20 +54,11 @@ class FeldmanVerifiableSecretSharing:
         return lhs == rhs
 
     def reconstruct(self, shares: List[Tuple[int, int]]) -> int:
-        # Standard Lagrange interpolation over Z_q
-        secret = 0
-        for i, (xi, yi) in enumerate(shares):
-            li = 1
-            for j, (xj, _) in enumerate(shares):
-                if i != j:
-                    li *= (xj * inverse(xj - xi, self.q)) % self.q
-                    li %= self.q
-            secret += yi * li
-            secret %= self.q
-        return secret
+        return lagrange_eval(shares, self.q)
 
 if __name__ == "__main__":
     secret = 123456789
+    print("Secret:", secret)
     feldman = FeldmanVerifiableSecretSharing(threshold=3, num_shares=5)
 
     print("p:", feldman.p)
@@ -79,10 +66,13 @@ if __name__ == "__main__":
     print("g:", feldman.g)
 
     shares, commitments = feldman.split(secret)
+    print("Feldman q bit length:", feldman.q.bit_length())
 
-    print("\nShares (x, y):")
+    print("Shares (x, y):")
     for x, y in shares:
-        print(f"{x}: y = {y}, valid? {feldman.verify_share(x, y, commitments)}")
+        is_valid = feldman.verify_share(x, y, commitments)
+        print(f"{x}: y = {y}, is_valid = {is_valid}")
 
     recovered = feldman.reconstruct(shares[:3])
-    print("\nRecovered Secret:", recovered)
+    print("Recovered Secret:", recovered)
+    print("Secrets match:", secret == recovered)
