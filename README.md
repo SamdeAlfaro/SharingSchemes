@@ -38,6 +38,12 @@ pip install -r requirements.txt
 python shamirsecretsharing.py
 ```
 
+To regenerate the data and graphs from scratch:
+* Run generate_csv.py
+* Run graph_results.py
+(Note that generating the CSV will take very long)
+
+
 ## Working
 
 Save dependencies:
