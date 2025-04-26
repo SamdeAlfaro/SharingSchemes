@@ -39,9 +39,8 @@ python shamirsecretsharing.py
 ```
 
 To regenerate the data and graphs from scratch:
-* Run generate_csv.py
+* Run generate_csv.py (Note that this step will take very long)
 * Run graph_results.py
-(Note that generating the CSV will take very long)
 
 
 ## Working

@@ -5,12 +5,10 @@ from pedersenscheme import PedersenSecretSharing
 from shamirsecretsharing import ShamirSecretSharing
 
 import datetime
-import matplotlib.pyplot as plt
-import numpy as np
 import secrets
 import csv
 
-# ________________________________Defining Benmarking for Each Scheme__________________________________
+# ________________________________Defining Benchmarking for Each Scheme__________________________________
 
 def benchmark_shamir(secret, threshold, num_shares, iter):
     # Benhmark Shamir
@@ -138,77 +136,40 @@ def benchmark(secret, threshold, num_shares, iter):
     return shamir_results, pedersen_results, feldman_results, blakley_results, ab_results
 
 
-
-
-# ________________________________Graph Results__________________________________
-
-# This is
-def graph_results(threshold, num_shares, secret_size, shamir_results, pedersen_results, feldman_results, blakley_results, ab_results):
-    # Combine results for graphing
-    split_data = [shamir_results[0], pedersen_results[0], feldman_results[0], blakley_results[0], ab_results[0]]
-    verify_data = [shamir_results[1], pedersen_results[1], feldman_results[1], blakley_results[1], ab_results[1]]
-    reconstruct_data = [shamir_results[2], pedersen_results[2], feldman_results[2], blakley_results[2], ab_results[2]]
-    labels = ["Shamir", "Pedersen", "Feldman", "Blakley", "Asmuth-Bloom"]
-
-    fig, ax = plt.subplots(figsize=(10, 6))
-    x = np.arange(len(labels))
-    bar_width = 0.25
-
-    split_color = '#4dbd6b'
-    verify_color = '#8f60cc'
-    reconstruct_color = '#f24b7d'
-
-    ax.bar(x, split_data, bar_width, label="Split", color=split_color)
-    ax.bar(x, verify_data, bar_width, bottom=split_data, label="Verify", color=verify_color)
-    ax.bar(x, reconstruct_data, bar_width, bottom=np.array(split_data) + np.array(verify_data), label="Reconstruct", color=reconstruct_color)
-
-    ax.set_xlabel('Secret Sharing Scheme')
-    ax.set_ylabel('Average Time (milliseconds)')
-    ax.set_title(f'Benchmarking Secret Sharing Schemes\nfor {num_shares} shares, threshold = {threshold}, and secret size (in bits) {secret_size}', fontsize=14)
-    ax.set_xticks(x)
-    ax.set_xticklabels(labels, rotation=30, ha='right')
-    ax.legend()
-
-    # Add a light grid
-    ax.grid(axis='y', linestyle='--')
-
-    plt.tight_layout()
-
-    filename = f"results/benchmark_t{threshold}_n{num_shares}_s{secret_size}.png"
-    # Save the figure
-    plt.savefig(filename)
-
 # ________________________________Benchmark!__________________________________
 
 
-iterations = 1
-thresholds = [[2, 5, 10], [5, 50, 100], [5, 500, 1000], [5, 5000, 10000]]
-shares = 10
-bit_lengths = [32, 64, 128, 256]
+iterations = 1000
+bit_lengths = [255]
+share_counts = [10, 100]
+threshold_dict = {
+    10: [2, 5, 10],
+    100: [5, 25, 50, 100]
+}
 secrets_list = [secrets.randbits(bits) for bits in bit_lengths]
 
 csv_filename = "results/benchmark_results.csv"
+
 with open(csv_filename, mode='w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(['Secret Size (bits)', 'Threshold', 'Num Shares', 'Scheme', 'Split Time (ms)', 'Verify Time (ms)', 'Reconstruct Time (ms)'])
 
-    for i in range(4):  # over secret sizes
+    for i in range(len(bit_lengths)):
         secret = secrets_list[i]
-        shares = 10 * (10 ** i)  # start with 10 and scale: 10, 100, 1000, 10000
-        for j in range(3):  # thresholds within each shares group
-            threshold = thresholds[i][j]
-            print(f"Running benchmark for secret size {bit_lengths[i]} bits, threshold {threshold}, and {shares} shares ......")
+        for shares in share_counts:
+            for threshold in threshold_dict[shares]:
+                print(f"Running benchmark for {bit_lengths[i]}-bit secret, threshold {threshold}, {shares} shares...")
 
-            # Run benchmark
-            shamir_results, pedersen_results, feldman_results, blakley_results, ab_results = benchmark(secret, threshold, shares, iterations)
+                # Run benchmark
+                shamir_results, pedersen_results, feldman_results, blakley_results, ab_results = benchmark(secret, threshold, shares, iterations)
 
-            # Write CSV
-            for label, split, verify, reconstruct in zip(
-                ["Shamir", "Pedersen", "Feldman", "Blakley", "Asmuth-Bloom"],
-                [shamir_results[0], pedersen_results[0], feldman_results[0], blakley_results[0], ab_results[0]],
-                [shamir_results[1], pedersen_results[1], feldman_results[1], blakley_results[1], ab_results[1]],
-                [shamir_results[2], pedersen_results[2], feldman_results[2], blakley_results[2], ab_results[2]]
-            ):
-                writer.writerow([bit_lengths[i], threshold, shares, label, split, verify, reconstruct])
+                # Write to CSV
+                for label, split, verify, reconstruct in zip(
+                    ["Shamir", "Pedersen", "Feldman", "Blakley", "Asmuth-Bloom"],
+                    [shamir_results[0], pedersen_results[0], feldman_results[0], blakley_results[0], ab_results[0]],
+                    [shamir_results[1], pedersen_results[1], feldman_results[1], blakley_results[1], ab_results[1]],
+                    [shamir_results[2], pedersen_results[2], feldman_results[2], blakley_results[2], ab_results[2]]
+                ):
+                    writer.writerow([bit_lengths[i], threshold, shares, label, split, verify, reconstruct])
 
-            print(f"Completed benchmark for secret size {bit_lengths[i]} bits, threshold {threshold}, and {shares} shares")
+                print(f"Completed {bit_lengths[i]}-bit, threshold {threshold}, shares {shares}")
