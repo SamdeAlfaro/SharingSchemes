@@ -313,8 +313,8 @@ def plot_grouped_bars(df, x_col, title, filename):
     ax.bar(verify_positions, verify_heights, width=bar_width, label='Verify', color='#8f60cc', edgecolor='#6f3eb0')
     ax.bar(reconstruct_positions, reconstruct_heights, width=bar_width, label='Reconstruct', color='#f24b7d', edgecolor='#c0305f')
 
-    ax.set_yscale('log')
-    ax.set_ylabel('Average Time (ms) (log scale)')
+    # ax.set_yscale('log')
+    ax.set_ylabel('Average Time (ms)')
     ax.set_title(title)
     ax.grid(axis='y', linestyle='--', alpha=0.7)
 
@@ -346,8 +346,8 @@ def plot_grouped_bars(df, x_col, title, filename):
     ax.set_xticks(scheme_positions)
     ax.set_xticklabels(scheme_labels, rotation=0, fontsize=10)
 
-    for center, label in metric_annotations:
-        ax.text(center, 0.5, label, ha='center', va='top', fontsize=8, rotation=0, clip_on=False)
+    # for center, label in metric_annotations:
+    #     ax.text(center, 0.5, label, ha='center', va='top', fontsize=8, rotation=0, clip_on=False)
 
     ax.legend()
 
@@ -369,7 +369,7 @@ def generate_compressed_graphs(df):
                 subset,
                 x_col='Secret Size (bits)',
                 title=f'Vary Secret Size (t={threshold}, n={num_shares})',
-                filename=f'results/compressed/vary_secret_t{threshold}_n{num_shares}.png'
+                filename=f'results/compressednolog/vary_secret_t{threshold}_n{num_shares}.png'
             )
 
     # 2. Vary Threshold (fixed secret size and num shares)
@@ -382,7 +382,7 @@ def generate_compressed_graphs(df):
                 subset,
                 x_col='Threshold',
                 title=f'Vary Threshold (s={secret_size}, n={num_shares})',
-                filename=f'results/compressed/vary_threshold_s{secret_size}_n{num_shares}.png'
+                filename=f'results/compressednolog/vary_threshold_s{secret_size}_n{num_shares}.png'
             )
 
     # 3. Vary Num Shares (fixed secret size, proportional threshold)
@@ -397,7 +397,7 @@ def generate_compressed_graphs(df):
                     ratio_subset,
                     x_col='Num Shares',
                     title=f'Vary Num Shares (s={secret_size}, t/n≈{ratio_val})',
-                    filename=f'results/compressed/vary_numshares_s{secret_size}_ratio{ratio_val}.png'
+                    filename=f'results/compressednolog/vary_numshares_s{secret_size}_ratio{ratio_val}.png'
                 )
 
 if __name__ == "__main__":
