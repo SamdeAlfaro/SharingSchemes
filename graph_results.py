@@ -10,6 +10,7 @@ def load_data(csv_file):
     df = pd.read_csv(csv_file)
     return df
 
+# Generates individual graphs for each combination of secret size, threshold, and number of shares -- per scheme
 def graph_from_csv(csv_file):
     grouped_data = defaultdict(lambda: {'labels': [], 'split': [], 'verify': [], 'reconstruct': []})
 
@@ -50,6 +51,7 @@ def graph_from_csv(csv_file):
         plt.savefig(filename)
         plt.close()
 
+# Helper function to generate a stacked histogram
 def plot_stacked_histogram(df, x_col, title, filename):
     x_labels = df[x_col].astype(str)
     split = df['Split Time (ms)']
@@ -77,6 +79,7 @@ def plot_stacked_histogram(df, x_col, title, filename):
     plt.savefig(filename)
     plt.close()
 
+# Generates graphs for each scheme, varying secret size, threshold, and number of shares
 def generate_per_scheme_graphs(df):
     schemes = df['Scheme'].unique()
 
@@ -130,9 +133,6 @@ def generate_cross_scheme_comparisons(df):
     grouped = df.groupby(['Secret Size (bits)', 'Threshold', 'Num Shares'])
 
     for (secret_size, threshold, num_shares), group in grouped:
-        if len(group['Scheme'].unique()) < 2:
-            continue  # Only interesting if multiple schemes exist
-
         labels = group['Scheme']
         split_data = group['Split Time (ms)']
         verify_data = group['Verify Time (ms)']
@@ -161,6 +161,7 @@ def generate_cross_scheme_comparisons(df):
         plt.savefig(filename)
         plt.close()
 
+# Runtime estimate
 def sum_total_runtime(csv_filename):
     total_time_ms = 0.0
     with open(csv_filename, newline='') as csvfile:
@@ -177,12 +178,14 @@ def sum_total_runtime(csv_filename):
 
     return hours, minutes, seconds
 
+# Helper to clarify graphs
 def slightly_darker(color, factor=0.85):
     """Darken a given color slightly."""
     from matplotlib.colors import to_rgb
     r, g, b = to_rgb(color)
     return (r * factor, g * factor, b * factor)
 
+# Plot histogram but with columns grouped per scheme - not stacked
 def plot_grouped_stacked_histogram(df, group_col, x_col, title, filename):
     schemes = sorted(df[group_col].unique())
     metric_values = sorted(df[x_col].unique())
@@ -357,7 +360,7 @@ def plot_grouped_bars(df, x_col, title, filename):
     plt.savefig(filename)
     plt.close()
 
-    
+# Generates graphs of histograms, but grouped
 def generate_compressed_graphs(df):
     # 1. Vary Secret Size (fixed threshold and num shares)
     fixed_params = df.groupby(['Threshold', 'Num Shares']).size().reset_index()
@@ -404,13 +407,15 @@ if __name__ == "__main__":
     csv_file = "results/benchmark_results.csv"
     df = load_data(csv_file)
 
+    # Uncomment the following lines to generate the graphs
+
     # hours, minutes, seconds = sum_total_runtime(csv_file)
     # print(f"Total runtime: {hours} hours, {minutes} minutes, {seconds:.2f} seconds")
 
     # generate_per_scheme_graphs(df)
     # generate_cross_scheme_comparisons(df)
     
-    generate_compressed_graphs(df)
+    # generate_compressed_graphs(df)
     
     # These are the generic schemes
     # graph_from_csv(csv_file)

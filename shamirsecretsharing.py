@@ -26,7 +26,6 @@ class ShamirSecretSharing:
 
     def split(self, secret: int) -> List[Tuple[int, int]]:
         start_time = datetime.datetime.now()
-        # Split secret into shares.
 
         if secret >= self.prime:
             raise ValueError("Secret must be less than the prime field")
@@ -40,7 +39,6 @@ class ShamirSecretSharing:
             y = eval_poly(poly, self.prime, x)
             shares.append((x, y))
             x_values.add(x)
-            # Simple x values are fine
             x = x + 1
         if self.enable_logs:
             elapsed = datetime.datetime.now() - start_time

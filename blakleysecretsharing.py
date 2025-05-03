@@ -14,12 +14,12 @@ class BlakleySecretSharing:
         if secret >= self.p:
             raise ValueError("Secret must be less than the prime field")
 
-        # The secret is embedded as the first coordinate in a k-dimensional vector
+        # Embed secret
         secret_vector = [secret] + [getRandomRange(0, self.p) for _ in range(self.k - 1)]
 
         shares = []
         for _ in range(self.n):
-            # Generate a random hyperplane: vector a and scalar b such that a·x = b
+            # Generate a random hyperplane: vector a and scalar b such that a*x = b
             coeffs = [getRandomRange(0, self.p) for _ in range(self.k)]
             b = sum(c * s for c, s in zip(coeffs, secret_vector)) % self.p
             shares.append((coeffs, b))
@@ -27,7 +27,6 @@ class BlakleySecretSharing:
         return shares
 
     def reconstruct(self, shares: List[Tuple[List[int], int]]) -> int:
-        # Reconstruct the secret from k shares (solve system of linear equations).
         if len(shares) < self.k:
             raise ValueError(f"Need at least {self.k} shares to reconstruct the secret")
 
@@ -38,7 +37,7 @@ class BlakleySecretSharing:
         # Solve A * x = b mod p
         x = self._solve_linear_system_mod_p(A, b, self.p)
 
-        return x[0]  # The secret is the first coordinate
+        return x[0]
 
     def _solve_linear_system_mod_p(self, A: List[List[int]], b: List[int], p: int) -> List[int]:
         # Solves Ax = b mod p using Gaussian elimination

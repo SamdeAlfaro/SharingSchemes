@@ -41,6 +41,7 @@ python shamirsecretsharing.py
 To regenerate the data and graphs from scratch:
 * Run generate_csv.py (Note that this step will take very long)
 * Run graph_results.py
+* To generate additional graphs for Feldman and Pedersen that are discussed in the paper, run pedersenfeldman-additionalgraphs.py
 
 
 ## Working

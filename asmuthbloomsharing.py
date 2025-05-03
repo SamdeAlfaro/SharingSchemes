@@ -1,5 +1,5 @@
 from sympy import nextprime
-import secrets  # Use the cryptographically secure secrets module
+import secrets
 from math import prod
 
 def chinese_remainder(moduli, residues):

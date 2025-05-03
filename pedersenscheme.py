@@ -62,8 +62,6 @@ class PedersenSecretSharing:
             print("split(shares): ", elapsed.total_seconds() * 1000)
 
         # Commitments: C_j = g^a_j * h^b_j mod p
-        # Maybe we break this out and share split with Shamir and Feldman.
-        # A lot of these functions can be shared between them if we want.
         commitments = [
             (pow(self.g, a, self.p) * pow(self.h, b, self.p)) % self.p
             for a, b in zip(a_coeffs, b_coeffs)

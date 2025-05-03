@@ -6,6 +6,8 @@ import pandas as pd
 import seaborn as sns
 import os
 
+# Exactly the same as the original graph_results.py script, but this one plots only for feldman and pedersen, with 1 verification rather than all
+
 def load_data(csv_file):
     df = pd.read_csv(csv_file)
     return df

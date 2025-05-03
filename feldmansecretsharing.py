@@ -40,7 +40,6 @@ class FeldmanVerifiableSecretSharing:
             y = eval_poly(coeffs, self.q, x)
             shares.append((x, y))
 
-        # Commitments: C_j = g^a_j mod p
         commitments = [pow(self.g, a, self.p) for a in coeffs]
 
         return shares, commitments
