@@ -1,6 +1,8 @@
 from Crypto.Util.number import getPrime, getRandomRange, inverse
 from typing import List, Tuple
 
+# Derived from: https://github.com/AlamHasabie/simple-asmuth-bloom/blob/master/asmuth_bloom.py
+
 class BlakleySecretSharing:
     def __init__(self, threshold: int, num_shares: int, bit_length: int = 256):
         if threshold > num_shares:
